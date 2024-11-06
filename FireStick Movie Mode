@@ -40,7 +40,7 @@ action:
           value_template: "{{ current_app in movie_apps }}"
         # Only run during evening hours
         - condition: time
-          after: '17:00:00'
+          after: '18:00:00'
           before: '07:00:00'
       sequence:
         # Dim the lights
