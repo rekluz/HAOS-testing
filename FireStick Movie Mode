@@ -1,0 +1,67 @@
+alias: Movie Mode - Firestick
+description: Dim lights when movie starts and restore to full brightness when paused/stopped
+trigger:
+  # Trigger when media state changes
+  - platform: state
+    entity_id: media_player.192_168_1_81  # Replace with your Firestick entity
+    to: 'playing'
+  - platform: state
+    entity_id: media_player.192_168_1_81  # Replace with your Firestick entity
+    to: 'paused'
+  - platform: state
+    entity_id: media_player.192_168_1_81  # Replace with your Firestick entity
+    to: 'idle'
+  - platform: state
+    entity_id: media_player.192_168_1_81  # Replace with your Firestick entity
+    to: 'standby'
+
+variables:
+  current_app: "{{ state_attr('media_player.192_168_1_81', 'app_id') }}"
+  movie_apps: >
+    {{ [
+      'com.amazon.firetv.youtube.tv',
+      'com.amazon.amazonvideo.livingroom',
+      'com.netflix.ninja',
+      'com.disney.disneyplus',
+      'com.hbo.hbonow',
+      'com.plexapp.android',
+      'com.apple.atve.amazon.appletv'
+    ] }}
+
+action:
+  choose:
+    # When media starts playing
+    - conditions:
+        # Check if media is playing
+        - condition: template
+          value_template: "{{ trigger.to_state.state == 'playing' }}"
+        # Check if it's a movie app
+        - condition: template
+          value_template: "{{ current_app in movie_apps }}"
+        # Only run during evening hours
+        - condition: time
+          after: '17:00:00'
+          before: '07:00:00'
+      sequence:
+        # Dim the lights
+        - service: light.turn_on
+          target:
+            area_id: light.dining  # Replace with your room
+          data:
+            brightness_pct: 30
+            transition: 3
+
+    # When media is paused/stopped
+    - conditions:
+        - condition: template
+          value_template: "{{ trigger.to_state.state in ['paused', 'idle', 'standby'] }}"
+        - condition: template
+          value_template: "{{ current_app in movie_apps }}"
+      sequence:
+        # Restore lights to full brightness
+        - service: light.turn_on
+          target:
+            area_id: living_room  # Replace with your room
+          data:
+            brightness_pct: 100
+            transition: 3
